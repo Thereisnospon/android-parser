@@ -1,0 +1,4 @@
+rootProject.name = 'android-parser'
+include 'parser-arsc'
+include 'parse-arsc-debug'
+
