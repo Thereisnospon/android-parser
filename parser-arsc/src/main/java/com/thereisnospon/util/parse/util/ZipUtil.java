@@ -11,7 +11,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipUtil {
 
-    public static void zip(String srcPath, String dstDir) throws Exception {
+    public static File zip(String srcPath, String dstDir) throws Exception {
         File srcFile = new File(srcPath);
         if (!srcFile.exists()) {
             throw new Exception(srcPath + " not exist!");
@@ -26,12 +26,19 @@ public class ZipUtil {
         if (dstZip.exists()) {
             dstZip = new File(dstFile, srcFile.getName() + System.currentTimeMillis() + ".zip");
         }
+        File cDir = dstZip;
+        dstZip = new File(dstZip.getAbsolutePath() + "bak");
         try (FileOutputStream fos = new FileOutputStream(dstZip)) {
             ZipOutputStream zos = new ZipOutputStream(fos);
             byte buf[] = new byte[1024];
             writeEntry(zos, "", srcFile, buf);
             zos.flush();
             zos.close();
+        }
+        if (dstZip.renameTo(cDir)) {
+            return cDir;
+        } else {
+            return dstZip;
         }
     }
 
@@ -88,7 +95,7 @@ public class ZipUtil {
         if (!srcZipFile.exists()) {
             return Collections.emptyList();
         }
-        List<ZipEntry> entries = new ArrayList<>();
+        List<ZipEntry> entries = new ArrayList<ZipEntry>();
         try (FileInputStream fis = new FileInputStream(srcZipFile)) {
             ZipInputStream zipInputStream = new ZipInputStream(fis);
             ZipEntry entry = null;
@@ -101,24 +108,30 @@ public class ZipUtil {
         return entries;
     }
 
-    public static void unzip(String srcZipFilePath, String dstDirPath) throws Exception {
+    public static File unzip(String srcZipFilePath, String dstDirPath) throws Exception {
         File srcZipFile = new File(srcZipFilePath);
         if (!srcZipFile.exists()) {
             throw new Exception(srcZipFilePath + " not exist!");
         }
-        File srcDir = new File(dstDirPath);
-        if (!srcDir.exists()) {
+        File dstDir = new File(dstDirPath);
+        if (!dstDir.exists()) {
             throw new Exception(dstDirPath + " not exist!");
-        } else if (!srcDir.isDirectory()) {
+        } else if (!dstDir.isDirectory()) {
             throw new Exception(dstDirPath + " not dir!");
         }
         ZipFile zipFile = new ZipFile(srcZipFilePath);
-        File toDir = new File(srcDir, srcZipFile.getName());
+        File toDir = new File(dstDir, srcZipFile.getName());
         if (toDir.exists()) {
-            toDir = new File(srcDir, srcZipFile.getName() + System.currentTimeMillis());
+            toDir = new File(dstDir, srcZipFile.getName() + System.currentTimeMillis());
         }
-        if (!toDir.mkdir()) {
-            throw new Exception(toDir.getAbsolutePath() + " mkdir error!");
+        File cDir = toDir;
+        toDir = new File(cDir.getAbsolutePath() + "bak");
+        if (!toDir.exists()) {
+            if (!toDir.mkdir()) {
+                throw new Exception(toDir.getAbsolutePath() + " mkdir error!");
+            }
+        } else {
+
         }
         byte buf[] = new byte[1024];
         int len = 0;
@@ -140,6 +153,11 @@ public class ZipUtil {
                 zeos.flush();
                 zeos.close();
             }
+        }
+        if(toDir.renameTo(cDir)){
+            return cDir;
+        }else{
+            return toDir;
         }
     }
 }
